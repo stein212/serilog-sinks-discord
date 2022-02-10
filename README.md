@@ -21,6 +21,7 @@ Log.Information("Hello, world!");
 ```
 
 Log events will be shown in the Discord channel:
+
 ![Hello world information log event](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/hello-world-information-log.png)
 
 ### Log Levels
@@ -40,7 +41,6 @@ Log.Fatal("This is a Fatal message");
 
 ![Log levels](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/log-levels.png)
 
-
 ### Exception
 
 ```csharp
@@ -59,7 +59,6 @@ catch (Exception e)
 ```
 
 ![Exception log](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/exception-log.png)
-
 
 ### Usage with Async Wrapper
 As it would take awhile for the Discord sink to send the log to Discord channel. In some cases it might be better to wrap it with `Serilog.Sinks.Async` so that your program does not wait for the log message to reach discord (kind of 'log and forget').
