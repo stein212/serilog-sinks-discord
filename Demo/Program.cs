@@ -19,46 +19,46 @@ Log.Information("Hello, world!");
 
 
 /* Different log levels */
-Log.Verbose("This is a Verbose message");
-Log.Debug("This is a Debug message");
-Log.Information("This is an Information message");
-Log.Warning("This is a Warning message");
-Log.Error("This is an Error message");
-Log.Fatal("This is a Fatal message");
+// Log.Verbose("This is a Verbose message");
+// Log.Debug("This is a Debug message");
+// Log.Information("This is an Information message");
+// Log.Warning("This is a Warning message");
+// Log.Error("This is an Error message");
+// Log.Fatal("This is a Fatal message");
 
 
 /* Example exception with stacktrce */
-try
-{
-    throw new Exception("Example exception thrown");
-}
-catch (Exception e)
-{
-    Log.Error(e, "This is an Error message with an Exception passed in");
-}
+// try
+// {
+//     throw new Exception("Example exception thrown");
+// }
+// catch (Exception e)
+// {
+//     Log.Error(e, "This is an Error message with an Exception passed in");
+// }
 
 
 /* Async wrapper behaviour */
 /* should log very fast on console while discord will get it later */
-for (int i = 0; i < 5; ++i)
-{
-    Log.Information($"{i}");
-}
+// for (int i = 0; i < 5; ++i)
+// {
+//     Log.Information($"{i}");
+// }
 
 
 /* Long message example */
-var token = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !@#$%^&*()_+{}:l',./<>?~`\n";
+// var token = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 !@#$%^&*()_+{}:l',./<>?~`\n";
 
-var longMessageBuilder = new StringBuilder();
+// var longMessageBuilder = new StringBuilder();
 
-for (var i = 0; i < 100; ++i)
-    longMessageBuilder.Append(token);
+// for (var i = 0; i < 100; ++i)
+//     longMessageBuilder.Append(token);
 
-Console.WriteLine($"Sending message with size: {longMessageBuilder.Length}");
+// Console.WriteLine($"Sending message with size: {longMessageBuilder.Length}");
 
-var longMessage = longMessageBuilder.ToString();
+// var longMessage = longMessageBuilder.ToString();
 
-Log.Information(longMessage);
+// Log.Information(longMessage);
 
 
 // Flush all then end program
