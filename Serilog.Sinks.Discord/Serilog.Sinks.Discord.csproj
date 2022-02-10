@@ -5,12 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Stein121.Serilog.Sinks.Discord</PackageId>
-    <Version>0.1.0-alpha</Version>
+    <Version>1.0.0</Version>
     <Authors>Stein121</Authors>
-    <Description>A Serilog sink that writes log events to Discord via Discord Webhooks.</Description>
+    <Description>A Serilog sink that writes log events to Discord via Discord Webhook.</Description>
     <PackageProjectUrl>https://github.com/stein212/serilog-sinks-discord</PackageProjectUrl>
     <RepositoryUrl>https://github.com/stein212/serilog-sinks-discord</RepositoryUrl>
+    <RespositoryType>git</RespositoryType>
     <PackageReadmeFile>../README.md</PackageReadmeFile>
+    <PackageTags>serilog, logging, log, discord, discord webhook, sink</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
