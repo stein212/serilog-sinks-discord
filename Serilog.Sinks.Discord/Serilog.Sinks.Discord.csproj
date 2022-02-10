@@ -11,7 +11,6 @@
     <PackageProjectUrl>https://github.com/stein212/serilog-sinks-discord</PackageProjectUrl>
     <RepositoryUrl>https://github.com/stein212/serilog-sinks-discord</RepositoryUrl>
     <RespositoryType>git</RespositoryType>
-    <PackageReadmeFile>../README.md</PackageReadmeFile>
     <PackageTags>serilog, logging, log, discord, discord webhook, sink</PackageTags>
   </PropertyGroup>
 
