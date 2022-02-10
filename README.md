@@ -21,7 +21,7 @@ Log.Information("Hello, world!");
 ```
 
 Log events will be shown in the Discord channel:
-![Hello world information log event](https://raw.githubusercontent.com/stein212/serilog-sinks-discord/dev/assets/hello-world-information-log.png)
+![Hello world information log event](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/hello-world-information-log.png)
 
 ### Log Levels
 
@@ -38,7 +38,7 @@ Log.Error("This is an Error message");
 Log.Fatal("This is a Fatal message");
 ```
 
-![Log levels](https://raw.githubusercontent.com/stein212/serilog-sinks-discord/dev/assets/log-levels.png)
+![Log levels](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/log-levels.png)
 
 
 ### Exception
@@ -58,7 +58,7 @@ catch (Exception e)
 }
 ```
 
-![Exception log](https://raw.githubusercontent.com/stein212/serilog-sinks-discord/dev/assets/exception-log.png)
+![Exception log](https://github.com/stein212/serilog-sinks-discord/raw/master/assets/exception-log.png)
 
 
 ### Usage with Async Wrapper
