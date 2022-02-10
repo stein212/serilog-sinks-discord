@@ -4,6 +4,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>Stein121.Serilog.Sinks.Discord</PackageId>
+    <Version>0.1.0-alpha</Version>
+    <Authors>Stein121</Authors>
+    <Description>A Serilog sink that writes log events to Discord via Discord Webhooks.</Description>
+    <PackageProjectUrl>https://github.com/stein212/serilog-sinks-discord</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stein212/serilog-sinks-discord</RepositoryUrl>
+    <PackageReadmeFile>../README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>

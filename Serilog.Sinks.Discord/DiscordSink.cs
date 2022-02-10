@@ -7,25 +7,22 @@ using Serilog.Events;
 namespace Serilog.Sinks.Discord;
 public class DiscordSink : ILogEventSink, IDisposable
 {
-    private static readonly int _embedDescriptionLimit = 4000; // 4096 actual
+    private static readonly int _embedDescriptionLimit = 4096;
     private static readonly string _spaceBetweenLines = "\n\n";
 
-    private readonly IFormatProvider _formatProvider;
-    private readonly UInt64 _webhookId;
+    private readonly ulong _webhookId;
     private readonly string _webhookToken;
-    private readonly LogEventLevel _minLogEventLevel;
+    private readonly IFormatProvider? _formatProvider;
     private readonly DiscordWebhookClient _client;
 
     public DiscordSink(
-        IFormatProvider formatProvider,
-        UInt64 webhookId,
+        ulong webhookId,
         string webhookToken,
-        LogEventLevel minLogEventLevel = LogEventLevel.Information)
+        IFormatProvider? formatProvider = null)
     {
-        _formatProvider = formatProvider;
         _webhookId = webhookId;
         _webhookToken = webhookToken;
-        _minLogEventLevel = minLogEventLevel;
+        _formatProvider = formatProvider;
         _client = new(webhookId, webhookToken);
     }
 
@@ -36,19 +33,18 @@ public class DiscordSink : ILogEventSink, IDisposable
 
     private async Task EmitAsync(LogEvent logEvent)
     {
-        if (logEvent.Level < _minLogEventLevel)
-            return;
-
         var message = logEvent.RenderMessage(_formatProvider);
-        var messageParts = Split(message);
 
         if (logEvent.Exception != null)
         {
-            var exceptionMessage = messageParts.Count() > 0 ? _spaceBetweenLines : "";
-            exceptionMessage += $"Exception Type: {logEvent.Exception.GetType()}{_spaceBetweenLines}{logEvent.Exception.Message}{_spaceBetweenLines}{logEvent.Exception.StackTrace}";
-            var exceptionParts = Split(exceptionMessage);
-            messageParts.AddRange(exceptionParts);
+            var exceptionMessage = $"Exception Type: {logEvent.Exception.GetType()}{_spaceBetweenLines}Exception Message: {logEvent.Exception.Message}{_spaceBetweenLines}Stacktrace: {logEvent.Exception.StackTrace}";
+            if (message.Length > 0)
+                message += $"{_spaceBetweenLines}{exceptionMessage}";
+            else
+                message = exceptionMessage;
         }
+
+        var messageParts = Split(message);
 
         var embeds = messageParts.Select(m =>
         {
@@ -143,12 +139,11 @@ public static class DiscordSinkExtenstions
 {
     public static LoggerConfiguration Discord(
             this LoggerSinkConfiguration loggerConfiguration,
-            UInt64 webhookId,
+            ulong webhookId,
             string webhookToken,
-            IFormatProvider formatProvider = null,
-            LogEventLevel minLogEventLevel = LogEventLevel.Information)
+            IFormatProvider? formatProvider = null)
     {
         return loggerConfiguration.Sink(
-            new DiscordSink(formatProvider, webhookId, webhookToken, minLogEventLevel));
+            new DiscordSink(webhookId, webhookToken, formatProvider));
     }
 }
