@@ -5,18 +5,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Stein121.Serilog.Sinks.Discord</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Stein121</Authors>
+    <Copyright>Copyright (c) Stein121 2022-Present</Copyright>
     <Description>A Serilog sink that writes log events to Discord via Discord Webhook.</Description>
     <PackageProjectUrl>https://github.com/stein212/serilog-sinks-discord</PackageProjectUrl>
     <RepositoryUrl>https://github.com/stein212/serilog-sinks-discord</RepositoryUrl>
     <RespositoryType>git</RespositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>serilog, logging, log, discord, discord webhook, sink</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Discord.Net.Webhook" Version="3.2.1" />
     <PackageReference Include="Serilog" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 
 </Project>
