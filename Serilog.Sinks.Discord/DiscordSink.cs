@@ -19,10 +19,12 @@ public class DiscordSink : ILogEventSink, IDisposable
     private readonly DiscordWebhookClient _client;
     private readonly Queue<Tuple<LogEventLevel, string>> _logEventBatch;
     private readonly int _batchTimeMs;
-    private readonly Timer _batchWaitTimer;
+    private readonly Timer? _batchWaitTimer;
     private readonly int _noOfEmbedLimit = 10;
 
     private object _batchMutex = new();
+    // find a better way to wait for flush to be done?
+    private bool _readyToFlush = true;
 
     public DiscordSink(
         ulong webhookId,
@@ -62,6 +64,7 @@ public class DiscordSink : ILogEventSink, IDisposable
 
     public void Emit(LogEvent logEvent)
     {
+        _readyToFlush = false;
         EmitAsync(logEvent).Wait();
     }
 
@@ -96,9 +99,7 @@ public class DiscordSink : ILogEventSink, IDisposable
     /// <returns>Task</returns>
     private async Task SendBatchAsync()
     {
-        var batchCount = _logEventBatch.Count;
-
-        if (batchCount == 0)
+        if (_logEventBatch.Count == 0)
             return;
 
         var levelBatches = new List<Tuple<LogEventLevel, string>>(_noOfEmbedLimit);
@@ -115,6 +116,8 @@ public class DiscordSink : ILogEventSink, IDisposable
                 var tuple = _logEventBatch.First();
                 if (tuple.Item2.Length + embedDescriptionCharCount > _embedDescriptionLimit)
                     break;
+
+                embedDescriptionCharCount += tuple.Item2.Length;
 
                 // put current group of same log event level messages into levelBatches
                 // clear for next log event level
@@ -147,6 +150,7 @@ public class DiscordSink : ILogEventSink, IDisposable
         // Webhooks are able to send multiple embeds per message
         // As such, your embeds must be passed as a collection.
         await _client.SendMessageAsync(embeds: embeds);
+        _readyToFlush = _logEventBatch.Count == 0;
     }
 
     private string FormatMessage(LogEvent logEvent)
@@ -234,11 +238,11 @@ public class DiscordSink : ILogEventSink, IDisposable
     public void Dispose()
     {
         // flush
-        while (_logEventBatch.Count > 0)
+        while (!_readyToFlush)
         {
             // let _batchWaitTimer flush at the same rate
             // do so by just waiting
-            Task.Delay(_batchTimeMs).Wait();
+            Task.Delay(100).Wait();
         }
         _client.Dispose();
     }

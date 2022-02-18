@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Serilog;
+﻿using Serilog;
 using Serilog.Sinks.Discord;
 
 // SET THE ENVIROMENT VARIABLES BEFORE RUNNING THE DEMO
@@ -10,7 +9,7 @@ var webhookToken = Environment.GetEnvironmentVariable("WEBHOOK_TOKEN")!;
 Log.Logger = new LoggerConfiguration()
     // use async wrapper to log and forget (no need to wait for discord to received the log)
     .WriteTo.Console()
-    .WriteTo.Async(a => a.Discord(webhookId, webhookToken))
+    .WriteTo.Async(a => a.Discord(webhookId, webhookToken, batchTimeMs: 2000))
     .MinimumLevel.Verbose()
     .CreateLogger();
 

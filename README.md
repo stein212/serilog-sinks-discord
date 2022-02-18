@@ -60,6 +60,15 @@ catch (Exception e)
 
 ![Exception log](https://raw.githubusercontent.com/stein212/serilog-sinks-discord/master/assets/exception-log.png)
 
+### Batch logging
+The Discord sink by default sends 1 message with as many embeds as possible (max 10) every 2 seconds. The `batchTimeMs` can be configured to be 0 to send immediately. Do note that spamming the Discord webhook too fast will cause the overall logging to slow down, it is better to send in batches to stay below the Discord rate limits.
+
+```csharp
+Log.Logger = new Logger Configuration()
+    .WriteTo.Discord(<WEBHOOK_ID>, <WEBHOOK_TOKEN>, batchTimeMs: 2000) // default is 2000ms, set 0 for no batching
+    .CreateLogger();
+```
+
 ### Usage with Async Wrapper
 It takes awhile for the Discord sink to send the log to Discord channel. In some cases it might be better to wrap it with `Serilog.Sinks.Async` so that your program does not wait for the log message to reach discord (kind of 'log and forget').
 
