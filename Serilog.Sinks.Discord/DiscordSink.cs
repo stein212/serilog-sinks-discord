@@ -8,7 +8,6 @@ using Serilog.Events;
 
 namespace Serilog.Sinks.Discord;
 public class DiscordSink : ILogEventSink, IDisposable
-
 {
     private static readonly int _embedDescriptionLimit = 4096;
     private static readonly string _spaceBetweenLines = "\n\n";

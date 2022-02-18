@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Stein121.Serilog.Sinks.Discord</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <Authors>Stein121</Authors>
     <Copyright>Copyright (c) Stein121 2022-Present</Copyright>
     <Description>A Serilog sink that writes log events to Discord via Discord Webhook.</Description>
