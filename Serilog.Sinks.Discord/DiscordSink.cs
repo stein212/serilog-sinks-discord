@@ -254,7 +254,7 @@ public static class DiscordSinkExtenstions
             ulong webhookId,
             string webhookToken,
             IFormatProvider? formatProvider = null,
-            int batchTimeMs = 1000)
+            int batchTimeMs = 2000)
     {
         return loggerConfiguration.Sink(
             new DiscordSink(webhookId, webhookToken, formatProvider, batchTimeMs));
