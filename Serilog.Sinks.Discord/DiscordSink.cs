@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using System.Text;
 using Discord;
 using Discord.Webhook;
 using Serilog.Configuration;
@@ -7,21 +6,20 @@ using Serilog.Core;
 using Serilog.Events;
 
 namespace Serilog.Sinks.Discord;
+
 public class DiscordSink : ILogEventSink, IDisposable
 {
-    private static readonly int _embedDescriptionLimit = 4096;
-    private static readonly string _spaceBetweenLines = "\n\n";
-
-    private readonly ulong _webhookId;
-    private readonly string _webhookToken;
-    private readonly IFormatProvider? _formatProvider;
-    private readonly DiscordWebhookClient _client;
-    private readonly Queue<Tuple<LogEventLevel, string>> _logEventBatch;
+    private const int EmbedDescriptionLimit = 4096;
+    private const string SpaceBetweenLines = "\n\n";
     private readonly int _batchTimeMs;
     private readonly Timer? _batchWaitTimer;
-    private readonly int _noOfEmbedLimit = 10;
+    private readonly DiscordWebhookClient _client;
+    private readonly IFormatProvider? _formatProvider;
+    private readonly Queue<Tuple<LogEventLevel, string>> _logEventBatch;
+    private const int NoOfEmbedLimit = 10;
 
-    private object _batchMutex = new();
+    private readonly object _batchMutex = new();
+
     // find a better way to wait for flush to be done?
     private bool _readyToFlush = true;
 
@@ -31,34 +29,25 @@ public class DiscordSink : ILogEventSink, IDisposable
         IFormatProvider? formatProvider = null,
         int batchTimeMs = 2000)
     {
-        _webhookId = webhookId;
-        _webhookToken = webhookToken;
         _formatProvider = formatProvider;
-        _client = new(webhookId, webhookToken);
+        _client = new DiscordWebhookClient(webhookId, webhookToken);
 
-        _logEventBatch = new();
+        _logEventBatch = new Queue<Tuple<LogEventLevel, string>>();
 
         _batchTimeMs = batchTimeMs;
-        if (_batchTimeMs > 0)
-        {
-            var batchWaitHelper = new BatchWaitHelper(EmitAsync);
-            var cancellationTokenSoruce = new CancellationTokenSource();
-            _batchWaitTimer = new(batchWaitHelper.SendBatch, null, 0, _batchTimeMs);
-        }
+        if (_batchTimeMs <= 0) return;
+        var batchWaitHelper = new BatchWaitHelper(EmitAsync);
+        _batchWaitTimer = new Timer(batchWaitHelper.SendBatch, null, 0, _batchTimeMs);
     }
 
-    private class BatchWaitHelper
+    public void Dispose()
     {
-        private Func<LogEvent?, bool, Task> _emitAsync;
-        public BatchWaitHelper(Func<LogEvent?, bool, Task> emitAsync)
-        {
-            _emitAsync = emitAsync;
-        }
-
-        public void SendBatch(object? _)
-        {
-            _emitAsync(null, true).Wait();
-        }
+        // flush
+        while (!_readyToFlush)
+            // let _batchWaitTimer flush at the same rate
+            // do so by just waiting
+            Task.Delay(100).Wait();
+        _client.Dispose();
     }
 
     public void Emit(LogEvent logEvent)
@@ -71,9 +60,10 @@ public class DiscordSink : ILogEventSink, IDisposable
     {
         // check if null
         if (logEvent == null && !timerElapsed)
-            throw new ArgumentNullException("logEvent cannot be null");
+            throw new ArgumentNullException(nameof(logEvent));
 
-        if (timerElapsed /*|| (!timerElapsed && _logEventBatch.Count > 0 && _logEventBatch.First().Level != logEvent!.Level)*/)
+        if (timerElapsed /*|| (!timerElapsed && _logEventBatch.Count > 0 && _logEventBatch.First().Level != logEvent!.Level)*/
+           )
             await SendBatchAsync();
 
         if (logEvent != null)
@@ -83,7 +73,7 @@ public class DiscordSink : ILogEventSink, IDisposable
             lock (_batchMutex)
             {
                 foreach (var messagePart in messageParts)
-                    _logEventBatch.Enqueue(new(logEvent.Level, messagePart));
+                    _logEventBatch.Enqueue(new Tuple<LogEventLevel, string>(logEvent.Level, messagePart));
             }
 
             // if no batching
@@ -93,27 +83,34 @@ public class DiscordSink : ILogEventSink, IDisposable
     }
 
     /// <summary>
-    /// Sends 1 message with as many log events as possible.
+    ///     Sends 1 message with as many log events as possible.
     /// </summary>
     /// <returns>Task</returns>
     private async Task SendBatchAsync()
     {
-        if (_logEventBatch.Count == 0)
-            return;
+        lock (_logEventBatch)
+        {
+            if (_logEventBatch.Count == 0)
+                        return;
+        }
 
-        var levelBatches = new List<Tuple<LogEventLevel, string>>(_noOfEmbedLimit);
+        var levelBatches = new List<Tuple<LogEventLevel, string>>(NoOfEmbedLimit);
 
         var embedDescriptionCharCount = 0;
         var levelMessageBuilder = new StringBuilder();
-        var currentLevel = _logEventBatch.First().Item1; // fine to read now as nothing else dequeues it
+        LogEventLevel currentLevel;
+        lock (_logEventBatch)
+        {
+            currentLevel = _logEventBatch.First().Item1;
+        }
 
         lock (_batchMutex)
         {
             // group same level messages together in 1 embed
-            while (_logEventBatch.Count() > 0)
+            while (_logEventBatch.Any())
             {
                 var tuple = _logEventBatch.First();
-                if (tuple.Item2.Length + embedDescriptionCharCount > _embedDescriptionLimit)
+                if (tuple.Item2.Length + embedDescriptionCharCount > EmbedDescriptionLimit)
                     break;
 
                 embedDescriptionCharCount += tuple.Item2.Length;
@@ -122,12 +119,12 @@ public class DiscordSink : ILogEventSink, IDisposable
                 // clear for next log event level
                 if (currentLevel != tuple.Item1)
                 {
-                    levelBatches.Add(new(currentLevel, levelMessageBuilder.ToString()));
+                    levelBatches.Add(new Tuple<LogEventLevel, string>(currentLevel, levelMessageBuilder.ToString()));
                     levelMessageBuilder.Clear();
                     currentLevel = tuple.Item1;
 
                     // max number of embeds allowed by discord so we stop
-                    if (levelBatches.Count() >= _noOfEmbedLimit)
+                    if (levelBatches.Count() >= NoOfEmbedLimit)
                         break;
                 }
 
@@ -137,7 +134,7 @@ public class DiscordSink : ILogEventSink, IDisposable
         }
 
         if (levelMessageBuilder.Length > 0)
-            levelBatches.Add(new(currentLevel, levelMessageBuilder.ToString()));
+            levelBatches.Add(new Tuple<LogEventLevel, string>(currentLevel, levelMessageBuilder.ToString()));
 
         var embeds = levelBatches.Select(t =>
         {
@@ -149,21 +146,24 @@ public class DiscordSink : ILogEventSink, IDisposable
         // Webhooks are able to send multiple embeds per message
         // As such, your embeds must be passed as a collection.
         await _client.SendMessageAsync(embeds: embeds);
-        _readyToFlush = _logEventBatch.Count == 0;
+        lock (_logEventBatch)
+        {
+            _readyToFlush = _logEventBatch.Count == 0;
+        }
     }
 
     private string FormatMessage(LogEvent logEvent)
     {
-        var message = logEvent!.RenderMessage(_formatProvider);
+        var message = logEvent.RenderMessage(_formatProvider);
 
-        if (logEvent.Exception != null)
-        {
-            var exceptionMessage = $"Exception Type: {logEvent.Exception.GetType()}{_spaceBetweenLines}Exception Message: {logEvent.Exception.Message}{_spaceBetweenLines}Stacktrace: {logEvent.Exception.StackTrace}";
-            if (message.Length > 0)
-                message += $"{_spaceBetweenLines}{exceptionMessage}";
-            else
-                message = exceptionMessage;
-        }
+        if (logEvent.Exception == null) return message;
+        var exceptionMessage =
+            $"Exception Type: {logEvent.Exception.GetType()}{SpaceBetweenLines}Exception Message: {logEvent.Exception.Message}{SpaceBetweenLines}Stacktrace: {logEvent.Exception.StackTrace}";
+        if (message.Length > 0)
+            message += $"{SpaceBetweenLines}{exceptionMessage}";
+        else
+            message = exceptionMessage;
+
         return message;
     }
 
@@ -173,21 +173,21 @@ public class DiscordSink : ILogEventSink, IDisposable
         var startIndex = 0;
         while (message.Length - startIndex > 0)
         {
-            if (message.Length - startIndex < _embedDescriptionLimit)
+            if (message.Length - startIndex < EmbedDescriptionLimit)
             {
                 parts.Add(message.Substring(startIndex, message.Length - startIndex));
                 break;
             }
 
             // maxEndIndex: the furthest we can cut off the message with no regards to '\n' and ' '
-            var maxEndIndex = Math.Min(startIndex + _embedDescriptionLimit, message.Length) - 1;
+            var maxEndIndex = Math.Min(startIndex + EmbedDescriptionLimit, message.Length) - 1;
 
             // check '\n'
-            var endIndex = message.LastIndexOf('\n', maxEndIndex, _embedDescriptionLimit);
+            var endIndex = message.LastIndexOf('\n', maxEndIndex, EmbedDescriptionLimit);
 
             // check ' ' if no '\n'
             if (endIndex == -1)
-                endIndex = message.LastIndexOf(' ', maxEndIndex, _embedDescriptionLimit);
+                endIndex = message.LastIndexOf(' ', maxEndIndex, EmbedDescriptionLimit);
 
             // check if there is any '\n' or ' ' to break at
             // if not we just break the word at the endIndex
@@ -229,32 +229,33 @@ public class DiscordSink : ILogEventSink, IDisposable
                 embedBuilder.Title = ":skull_crossbones: Fatal";
                 embedBuilder.Color = Color.DarkRed;
                 break;
-            default:
-                break;
         }
     }
 
-    public void Dispose()
+    private class BatchWaitHelper
     {
-        // flush
-        while (!_readyToFlush)
+        private readonly Func<LogEvent?, bool, Task> _emitAsync;
+
+        public BatchWaitHelper(Func<LogEvent?, bool, Task> emitAsync)
         {
-            // let _batchWaitTimer flush at the same rate
-            // do so by just waiting
-            Task.Delay(100).Wait();
+            _emitAsync = emitAsync;
         }
-        _client.Dispose();
+
+        public void SendBatch(object? _)
+        {
+            _emitAsync(null, true).Wait();
+        }
     }
 }
 
-public static class DiscordSinkExtenstions
+public static class DiscordSinkExtensions
 {
     public static LoggerConfiguration Discord(
-            this LoggerSinkConfiguration loggerConfiguration,
-            ulong webhookId,
-            string webhookToken,
-            IFormatProvider? formatProvider = null,
-            int batchTimeMs = 2000)
+        this LoggerSinkConfiguration loggerConfiguration,
+        ulong webhookId,
+        string webhookToken,
+        IFormatProvider? formatProvider = null,
+        int batchTimeMs = 2000)
     {
         return loggerConfiguration.Sink(
             new DiscordSink(webhookId, webhookToken, formatProvider, batchTimeMs));
