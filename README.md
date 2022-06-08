@@ -1,10 +1,12 @@
 # Serilog.Sinks.Discord
 
-A Serilog sink that writes log events to a Discord channel via Discord Webhooks. The log events will be shown as an embed in the Discord channel.
+A Serilog sink that writes log events to a Discord channel via Discord Webhooks. The log events will be shown as an
+embed in the Discord channel.
 
 ### Getting started
 
-To use the Discord sink, first install the [NuGet package](https://www.nuget.org/packages/Stein121.Serilog.Sinks.Discord)
+To use the Discord sink, first install
+the [NuGet package](https://www.nuget.org/packages/Stein121.Serilog.Sinks.Discord)
 
 ```shell
 dotnet add package Stein121.Serilog.Sinks.Discord
@@ -61,7 +63,10 @@ catch (Exception e)
 ![Exception log](https://raw.githubusercontent.com/stein212/serilog-sinks-discord/master/assets/exception-log.png)
 
 ### Batch logging
-The Discord sink by default sends 1 message with as many embeds as possible (max 10) every 2 seconds. The `batchTimeMs` can be configured to be 0 to send immediately. Do note that spamming the Discord webhook too fast will cause the overall logging to slow down, it is better to send in batches to stay below the Discord rate limits.
+
+The Discord sink by default sends 1 message with as many embeds as possible (max 10) every 2 seconds. The `batchTimeMs`
+can be configured to be 0 to send immediately. Do note that spamming the Discord webhook too fast will cause the overall
+logging to slow down, it is better to send in batches to stay below the Discord rate limits.
 
 ```csharp
 Log.Logger = new Logger Configuration()
@@ -70,7 +75,10 @@ Log.Logger = new Logger Configuration()
 ```
 
 ### Usage with Async Wrapper
-It takes awhile for the Discord sink to send the log to Discord channel. In some cases it might be better to wrap it with `Serilog.Sinks.Async` so that your program does not wait for the log message to reach discord (kind of 'log and forget').
+
+It takes awhile for the Discord sink to send the log to Discord channel. In some cases it might be better to wrap it
+with `Serilog.Sinks.Async` so that your program does not wait for the log message to reach discord (kind of 'log and
+forget').
 
 ```shell
 dotnet add package Serilog.Sinks.Console
@@ -97,7 +105,12 @@ Log.CloseAndFlush();
 ```
 
 ### Long log messages
-The sink is designed to send the log messages as embeds in Discord channels. As of this writing, the limit for the embed's description is `4096`. 
-See [https://discord.com/developers/docs/resources/channel#embed-limits](https://discord.com/developers/docs/resources/channel#embed-limits) for more limits.
 
-The sink will split a long message (>`4096` characters) into multiple embed messages. It will try to first split at a newline `'\n'`, then try to split at a space `' '`, then finally it resorts to breaking the word to fit the embed limits.
+The sink is designed to send the log messages as embeds in Discord channels. As of this writing, the limit for the
+embed's description is `4096`.
+See [https://discord.com/developers/docs/resources/channel#embed-limits](https://discord.com/developers/docs/resources/channel#embed-limits)
+for more limits.
+
+The sink will split a long message (>`4096` characters) into multiple embed messages. It will try to first split at a
+newline `'\n'`, then try to split at a space `' '`, then finally it resorts to breaking the word to fit the embed
+limits.
